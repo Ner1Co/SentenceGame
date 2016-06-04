@@ -39,7 +39,7 @@ io.on('connection', function (socket) {
 
     socket.join(roomName);
 
-    // echo globally (all clients) that a person has connected
+    // echo to all client in the room that a person has connected
     socket.to(roomName).emit('user joined', {
       username: socket.username,
       numUsers: numUsers
@@ -152,9 +152,10 @@ class Game{
       this.gameStartedTime = new Date();
     }
 
+    let lastSocket = io.sockets.connected[this.sockets[this.currentSocketIndex]];
     let nextSocket = this.getNextSocket();
     let lastMessage = this.sentences.length > 0 ? this.sentences[this.sentences.length - 1] : "You're first";
-    nextSocket.emit('your turn', {message: lastMessage, username: nextSocket.username});
+    nextSocket.emit('your turn', {message: lastMessage, username: lastSocket ? lastSocket.username : ""});
 
     // tell everyone who is the next player
     io.to(this.roomName).emit('current player', {
