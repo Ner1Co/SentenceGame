@@ -23,10 +23,24 @@ io.on('connection', function (socket) {
   var addedUser = false;
 
   socket.on('join', (roomName, maxSentences) => {
-
     //room name exists
     if(games[roomName]){
       games[roomName].addSocket(socket);
+
+      let gameSockets = games[roomName].sockets;
+      let currentUser = io.sockets.connected[gameSockets[games[roomName].currentSocketIndex]].username;
+      let users = [];
+
+      gameSockets.forEach(socketId => {
+        users.push(io.sockets.connected[socketId].username)
+      });
+
+      io.to(socket.id).emit('game state', {
+        users: users,
+        currentPlayer: currentUser,
+        startTime : games[roomName].gameStartedTime,
+        endTime: games[roomName].gameEndTime
+      });
     } else {
       var game = new Game(roomName, maxSentences);
       game.addSocket(socket);

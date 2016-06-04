@@ -255,6 +255,10 @@ $(function() {
     addChatMessage(data);
   });
 
+  socket.on('game state', function (data) {
+    log(JSON.stringify(data));
+  });
+
   // Whenever the server emits 'user joined', log it in the chat body
   socket.on('user joined', function (data) {
     log(data.username + ' joined');
