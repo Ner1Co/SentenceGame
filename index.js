@@ -20,10 +20,14 @@ var numUsers = 0;
 var games = {};
 
 io.on('connection', function (socket) {
+  console.log("new connection to game")
   var addedUser = false;
 
-  socket.on('join', (roomName, maxSentences) => {
+  socket.on('join', (data) => {
+    var roomName = data.roomName;
+    var maxSentences = data.maxSentences;
     //room name exists
+    console.log(data,roomName)
     if(games[roomName]){
       games[roomName].addSocket(socket);
 
@@ -42,11 +46,12 @@ io.on('connection', function (socket) {
         endTime: games[roomName].gameEndTime
       });
     } else {
+      console.log("User Create new game with name: "+roomName+" with max sentences: "+ maxSentences);
       var game = new Game(roomName, maxSentences);
       game.addSocket(socket);
       games[roomName] = game;
 
-      socket.emit('new game', {
+      io.emit('new game', {
         gameName: roomName
       });
     }
@@ -75,6 +80,7 @@ io.on('connection', function (socket) {
 
     // when the user disconnects.. perform this
     socket.on('disconnect', function () {
+      console.log("diconnect");
       if (addedUser) {
         --numUsers;
         games[roomName].removeSocket(socket);

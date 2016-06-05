@@ -23,67 +23,97 @@ app.factory('socket', ['$rootScope', function($rootScope) {
 }]);
 
 app.controller('LoginController', function($scope, socket) {
-    $scope.newUser = '';
 
+});
+
+app.controller('MainController', function($scope, socket){
+
+    $scope.openGames = [];
+    $scope.currentGameUsers = [];
+    $scope.currentUserTurn = '';
+
+   //##########################################login data ##########################################
+
+    $scope.newUser = '';
+    $scope.status = 'login';
+    $scope.gameEnd=true;
+    $scope.sentences=[];
+    $scope.msgs=[];
 
     $scope.login = function() {
         socket.emit('add user', $scope.newUser);
     };
 
     socket.on('login', function(data) {
+        console.log("######### LOG:login #########");
+        console.log(data);
+        console.log("######### END LOG:login #########");
         $scope.$apply(function () {
+            $scope.status='games';
+            $scope.openGames = [];
             data.games.forEach(function(item, index){
                 $scope.openGames.push(item)
             });
-            console.log(data.games);
-            $scope.status="games";
         });
     });
-});
 
-app.controller('MainController', function($scope){
-    $scope.status = "login";
-    $scope.openGames = [];
-    $scope.currentGameUsers = [];
-    $scope.currentUserTurn = '';
-});
 
-app.controller('GamesController', function($scope, socket){
+    //########################################## games section data ##########################################
     $scope.newGameName='';
     $scope.newGameAmount='';
     $scope.goToGame = function(name){
         $scope.currentGame = name;
-        socket.emit('join', name);
+        socket.emit('join', {roomName:name});
     };
     socket.on('game state', function(data){
+        console.log("######### LOG:game state #########");
+        console.log(data);
+        console.log("######### END LOG:game state #########");
         $scope.$apply(function () {
             data.users.forEach(function(item, index){
                 $scope.currentGameUsers.push(item);
             });
             $scope.currentUserTurn = data.currentPlayer;
             $scope.status="game";
+            $scope.gameEnd=false;
         });
     });
     $scope.newGame=function (){
-        socket.emit('join', $scope.newGameName, $scope.newGameAmount);
+        socket.emit('join',
+            {
+                roomName:$scope.newGameName,
+                maxSentences:parseInt($scope.newGameAmount)
+            });
     };
     socket.on('new game', function(data){
+        console.log("######### LOG:new game #########");
+        console.log(data);
+        console.log("######### END LOG:new game #########");
         $scope.$apply(function () {
-            $scope.currentGameUsers.push($scope.newName);
-            $scope.status="game";
+            $scope.openGames.push(data.gameName);
+            if (data.gameName == $scope.newGameName){
+                $scope.currentGameUsers.push($scope.newUser);
+                $scope.status="game";
+                $scope.currentGame = data.gameName;
+                $scope.gameEnd=false;
+            }
         });
     });
 
-});
-
-app.controller('GameController',function($scope, socket){
+    //########################################## game room data ##########################################
     $scope.newSentence="";
     socket.on('current player', function(data){
+        console.log("######### LOG:current player #########");
+        console.log(data);
+        console.log("######### END LOG:current player #########");
         $scope.$apply(function () {
             $scope.currentUserTurn = data.username;
         });
     });
     socket.on('your turn', function(data){
+        console.log("######### LOG:your turn #########");
+        console.log(data);
+        console.log("######### END LOG:your turn #########");
         $scope.$apply(function () {
             $scope.currentUserTurn = $scope.newUser;
             $scope.lastSentence = data.message;
@@ -91,12 +121,49 @@ app.controller('GameController',function($scope, socket){
         });
     });
     $scope.sendSentence = function(){
-        $socket.emit('new sentence', $scope.newSentence);
+        socket.emit('new sentence', $scope.newSentence);
     };
     socket.on('user joined', function(data){
+        console.log("######### LOG:user joined #########");
+        console.log(data);
+        console.log("######### END LOG:user joined #########");
         $scope.$apply(function () {
-            $scope.currentGameUsers.push(date.username);
+            $scope.msgs.push("We have a new player in the game! Welcome "+data.username);
+            $scope.currentGameUsers.push(data.username);
         });
     });
+    socket.on('user left', function(data){
+        $scope.$apply(function () {
+            var index = $scope.currentGameUsers.indexOf(data.username);
+            if (index > -1) {
+                $scope.currentGameUsers.splice(index, 1);
+                $scope.msgs.push("Wah Wah Wah, "+ data.username +"has left the game!");
+
+            }
+        });
+
+    });
+    socket.on('game over', function(data){
+        $scope.$apply(function () {
+            data.forEach(function(item, index){
+                $scope.sentences.push(item)
+            });
+            $scope.gameEnd=true;
+            $scope.msgs.push("The game ended!");
+
+        });
+
+    });
+
+
+
+});
+
+app.controller('GamesController', function($scope, socket){
+
+});
+
+app.controller('GameController',function($scope, socket){
+
 
 });

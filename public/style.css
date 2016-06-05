@@ -148,8 +148,8 @@ ul {
   width: 100%;
 }
 .active{
-  border-color: green;
+  color: green;
+  font-weight: bold;
 }
-.active{
-  border-color: green;
-}
+
+
