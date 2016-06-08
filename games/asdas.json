@@ -1,0 +1,15 @@
+{
+    "roomName": "asdas",
+    "maxSentences": 1,
+    "tokens": [
+        1465397771,
+        1465397803
+    ],
+    "currentSocketIndex": 0,
+    "sentences": [
+        "hi there motherfucker"
+    ],
+    "lastUsername": "gaf",
+    "gameStartedTime": "2016-06-08T14:56:56.235Z",
+    "gameEndTime": "2016-06-08T14:57:23.035Z"
+}

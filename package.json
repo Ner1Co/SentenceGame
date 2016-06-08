@@ -7,7 +7,10 @@
   "private": true,
   "license": "BSD",
   "dependencies": {
+    "cookie": "^0.3.1",
     "express": "4.13.4",
-    "socket.io": "^1.4.6"
+    "jsonwebtoken": "^7.0.0",
+    "socket.io": "^1.4.6",
+    "socketio-jwt": "^4.3.4"
   }
 }

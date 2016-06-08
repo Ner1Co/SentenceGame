@@ -9,15 +9,50 @@ app.config(['$routeProvider', function ($routeProvider) {
     });
 }]);
 
-app.factory('socket', ['$rootScope', function ($rootScope) {
-    var socket = io.connect();
+app.factory('socket', ['$rootScope', '$http', function ($rootScope, $http) {
+    var socket, token;
+    var emitQ = [], onQ = [];
+
+    $http({
+        method: 'POST',
+        url: '/login'
+    }).then(function successCallback(response) {
+        socket = io.connect({ forceNew: true , 'query': 'token=' + response.data.token});
+        if(onQ){
+            onQ.forEach(function(item){
+                socket.on(item.eventName, item.callback);
+            })
+        }
+
+        if(emitQ){
+            emitQ.forEach(function(item){
+                socket.emit(item.eventName, item.data);
+            })
+        }
+
+        socket.on("error", function(error) {
+            if (error.type == "UnauthorizedError" || error.code == "invalid_token") {
+                // redirect user to login page perhaps?
+                console.log("User's token has expired");
+            }
+        });
+
+
+
+    }, function errorCallback(response) {});
 
     return {
         on: function (eventName, callback) {
-            socket.on(eventName, callback);
+            if(!socket)
+                onQ.push({eventName: eventName, callback: callback});
+            else
+                socket.on(eventName, callback);
         },
         emit: function (eventName, data) {
-            socket.emit(eventName, data);
+            if(!socket)
+                emitQ.push({eventName: eventName, data: data});
+            else
+                socket.emit(eventName, data);
         }
     };
 }]);
@@ -25,6 +60,10 @@ app.factory('socket', ['$rootScope', function ($rootScope) {
 app.controller('LoginController', function ($scope, socket) {
 
 });
+
+function socketConfig(socket){
+
+}
 
 app.controller('MainController', function ($scope, socket) {
 
@@ -49,12 +88,20 @@ app.controller('MainController', function ($scope, socket) {
 
     };
 
+    socket.on('connect', function() {
+        if ($scope.newUser!==''){
+            socket.emit('add user', $scope.newUser);
+        }
+        console.log("Connected");
+    });
+
     socket.on('login', function (data) {
         console.log("######### LOG:login #########");
         console.log(data);
         console.log("######### END LOG:login #########");
         $scope.$apply(function () {
-            $scope.status = 'games';
+            if ($scope.status != 'game')
+                $scope.status = 'games';
             $scope.openGames = [];
             data.games.forEach(function (item, index) {
                 $scope.openGames.push(item)

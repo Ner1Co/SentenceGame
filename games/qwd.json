@@ -1,0 +1,12 @@
+{
+    "roomName": "qwd",
+    "maxSentences": 1,
+    "tokens": [
+        1465397612
+    ],
+    "currentSocketIndex": -1,
+    "sentences": [],
+    "lastUsername": "",
+    "gameStartedTime": null,
+    "gameEndTime": null
+}
