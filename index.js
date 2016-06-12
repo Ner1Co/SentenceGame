@@ -11,6 +11,12 @@ const fs = require('fs');
 const path = require('path');
 var execSync = require('child_process').execSync;
 const port = process.env.PORT || 3000;
+var mongoose = require('mongoose');
+
+
+
+
+
 
 var numUsers = 0;
 var games = {};
@@ -66,6 +72,18 @@ class Game{
       if(err){
         console.log(err);
       }
+      var g = new GameModel;
+      g.gameObj = game;
+      g.markModified('gameObj');
+      g.save(function(err,done){
+        if (!err){
+          console.log("finished saving");
+          console.log(done);
+        }else{
+          console.log(err);
+        }
+
+      })
     })
   }
 
@@ -207,9 +225,29 @@ function initData(){
 
     games[roomName] = game;
   });
+  /*
+  GameModel.find({}, function(err, games){
+    if (err){
+      console.log(err);
+      console.log("read error")
+    }else{
+      console.log("read success")
+      console.log(games);
+    }
+  });
+  */
 }
+var GameModel;
+mongoose.connect('mongodb://cloud_course:cloud_course@ds011664.mlab.com:11664/cloud_course', function (error) {
+  if (error) {
+    console.log(error);
+  }else{
+    require('./models');
+    GameModel = mongoose.model('Game');
+    initData();
+  }
+});
 
-initData();
 
 server.listen(port, function () {
   console.log('Server listening at port %d', port);
