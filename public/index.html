@@ -54,7 +54,9 @@
                 <h5>The last sentence written by {{lastSentenceWriter}} is: {{lastSentence}}</h5>
                 <h5>Your Sentence:</h5>
                 <input type="text" ng-model="newSentence"/>
-                <button ng-click="sendSentence()">Send!</button>
+                <button ng-click="sendSentence()" ng-disabled="noServer">Send!</button>
+                <div ng-show="noServer">Server is restarting</div>
+                <img width="30px" ng-show="noServer" src="btsp/spinner.svg" alt=""/>
             </div>
             <div class="col-sm-6" ng-show="gameEnd">
                 <h4>The game has ended, this is the story:</h4>
@@ -68,6 +70,9 @@
                     <li ng-repeat="msg in msgs">{{msg}}</li>
                 </ul>
             </div>
+        </div>
+        <div ng-show="gameEnd" class="row">
+            <button class="btn btn-link" ng-click="backToGames()">Back To Games Room</button>
         </div>
     </div>
 </div>

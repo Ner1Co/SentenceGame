@@ -70,7 +70,7 @@ app.controller('MainController', function ($scope, socket) {
     $scope.openGames = [];
     $scope.currentGameUsers = [];
     $scope.currentUserTurn = '';
-
+    $scope.noServer = false;
     //##########################################login data ##########################################
 
     $scope.newUser = '';
@@ -87,8 +87,11 @@ app.controller('MainController', function ($scope, socket) {
         }
 
     };
-
+    socket.on('dupe_user', function(data){
+       alert("User name already taken, please pick another one");
+    });
     socket.on('connect', function() {
+        $scope.noServer = false;
         if ($scope.newUser!==''){
             socket.emit('add user', $scope.newUser);
         }
@@ -115,6 +118,8 @@ app.controller('MainController', function ($scope, socket) {
     $scope.newGameAmount = '';
     $scope.goToGame = function (name) {
         $scope.currentGame = name;
+        $scope.newGameName = "";
+        $scope.newGameAmount= "";
         socket.emit('join', {roomName: name});
     };
     socket.on('game state', function (data) {
@@ -132,8 +137,6 @@ app.controller('MainController', function ($scope, socket) {
     });
     $scope.newGame = function () {
         if ($scope.newGameName != '' && $scope.newGameAmount === parseInt($scope.newGameAmount, 10) && $scope.newGameAmount > 0) {
-
-
             socket.emit('join',
                 {
                     roomName: $scope.newGameName,
@@ -152,7 +155,17 @@ app.controller('MainController', function ($scope, socket) {
                 $scope.status = "game";
                 $scope.currentGame = data.gameName;
                 $scope.gameEnd = false;
+                $scope.newGameName = "";
+                $scope.newGameAmount= "";
             }
+        });
+    });
+    socket.on('game_ended_update', function(data){
+        $scope.$apply(function () {
+            console.log("ODED")
+            console.log(data.gameName);
+            let itemp = $scope.openGames.indexOf(data.gameName);
+            $scope.openGames.splice(itemp,1);
         });
     });
 
@@ -207,11 +220,22 @@ app.controller('MainController', function ($scope, socket) {
             });
             $scope.gameEnd = true;
             $scope.msgs.push("The game ended!");
-
         });
 
     });
-
+    $scope.backToGames = function () {
+        $scope.status = "games";
+        $scope.currentGameUsers = [];
+    };
+    socket.on('reconnect_error',function(){
+        //console.log($scope.currentUserTurn === $scope.newUser && !$scope.gameEnd);
+        if ($scope.currentUserTurn === $scope.newUser && !$scope.gameEnd){
+            $scope.$apply(function () {
+                console.log("asdasdasd")
+                $scope.noServer = true;
+            });
+        }
+    })
 
 });
 

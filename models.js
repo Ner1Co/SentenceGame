@@ -8,6 +8,9 @@ var Schema = mongoose.Schema;
 
 // create a schema
 var gameSchema = new Schema({
+    _someId: Schema.Types.ObjectId,
+    roomName: String,
+    isActive: Boolean,
     gameObj: Schema.Types.Mixed
 });
 
