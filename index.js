@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 var execSync = require('child_process').execSync;
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 var mongoose = require('mongoose');
 
 
@@ -253,9 +253,11 @@ function initData() {
             console.log(err);
             console.log("read error")
             console.log("Server won't start due to db errors, trying again");
-            server.listen(port, function () {
-                console.log('Server listening at port %d', port);
+            lex.listen([80], [443], function() {
+                var protocol = ('requestCert' in this) ? 'https': 'http';
+                console.log("Listening at " + protocol + '://localhost:' + this.address().port);
             });
+
         } else {
             console.log("read games in init - success")
             console.log(gamesFromDb);
@@ -270,9 +272,11 @@ function initData() {
                 });
                 games[game.roomName] = gameObj;
             });
-            server.listen(port, function () {
-                console.log('Server listening at port %d', port);
+            lex.listen([80], [443], function() {
+                var protocol = ('requestCert' in this) ? 'https': 'http';
+                console.log("Listening at " + protocol + '://localhost:' + this.address().port);
             });
+
         }
     });
 
@@ -306,7 +310,23 @@ mongoose.connect('mongodb://cloud_course:cloud_course@ds011664.mlab.com:11664/cl
 });
 
 
+/* Note: using staging server url, remove .testing() for production
+ Using .testing() will overwrite the debug flag with true */
+var LEX = require('letsencrypt-express').testing();
 
+var lex = LEX.create({
+    configDir: require('os').homedir() + '/letsencrypt/etc'
+    , approveRegistration: function (hostname, cb) { // leave `null` to disable automatic registration
+        // Note: this is the place to check your database to get the user associated with this domain
+        cb(null, {
+            domains: [hostname]
+            , email: 'my@huji.com'
+            , agreeTos: true
+        });
+    }
+});
+
+lex.onRequest = app;
 
 // Routing
 app.use(express.static(__dirname + '/public'));
@@ -321,7 +341,8 @@ app.post('/login', (req, res) => {
 
 app.post('/kill', () => {
     console.log("Shutting down...");
-    execSync("shutdown");
+    res.send("Shutting down...");
+    execSync("sudo shutdown 0");
 });
 
 io.use(socketioJwt.authorize({

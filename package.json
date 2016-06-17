@@ -10,6 +10,7 @@
     "cookie": "^0.3.1",
     "express": "4.13.4",
     "jsonwebtoken": "^7.0.0",
+    "letsencrypt-express": "^1.1.5",
     "mongoose": "^4.4.20",
     "socket.io": "^1.4.6",
     "socketio-jwt": "^4.3.4"
