@@ -3,16 +3,32 @@
 // Setup basic express server
 const express = require('express');
 const app = express();
-const server = require('http').createServer(app);
+
+/* Note: using staging server url, remove .testing() for production
+ Using .testing() will overwrite the debug flag with true */
+var LEX = require('letsencrypt-express');
+
+var lex = LEX.create({
+    configDir: '/home/ec2-user/letsencrypt/etc'
+    , approveRegistration: function (hostname, cb) { // leave `null` to disable automatic registration
+        // Note: this is the place to check your database to get the user associated with this domain
+        cb(null, {
+            domains: [hostname]
+            , email: 'my@huji.com'
+            , agreeTos: true
+        });
+    }
+});
+
+const server = require('https').createServer(lex.httpsOptions, LEX.createAcmeResponder(lex, app));
 const io = require('socket.io')(server);
 const socketioJwt = require('socketio-jwt');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 var execSync = require('child_process').execSync;
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 3443;
 var mongoose = require('mongoose');
-
 
 var numUsers = 0;
 var games = {};
@@ -253,11 +269,9 @@ function initData() {
             console.log(err);
             console.log("read error")
             console.log("Server won't start due to db errors, trying again");
-            lex.listen([80], [443], function() {
-                var protocol = ('requestCert' in this) ? 'https': 'http';
-                console.log("Listening at " + protocol + '://localhost:' + this.address().port);
-            });
-
+            server.listen(port, function () {
+                console.log('Server listening at port %d', port);
+            })
         } else {
             console.log("read games in init - success")
             console.log(gamesFromDb);
@@ -272,30 +286,11 @@ function initData() {
                 });
                 games[game.roomName] = gameObj;
             });
-            lex.listen([80], [443], function() {
-                var protocol = ('requestCert' in this) ? 'https': 'http';
-                console.log("Listening at " + protocol + '://localhost:' + this.address().port);
-            });
-
+            server.listen(port, function () {
+                console.log('Server listening at port %d', port);
+            })
         }
     });
-
-
-    /*sync read
-     var files = fs.readdirSync("./games");
-     files.forEach(filename => {
-     var roomName = path.basename(filename, '.json');
-     var game = new Game(roomName, 10);
-
-     game.load();
-
-     game.tokens.forEach((token, i) =>{
-     tokens[token] = {roomName: roomName, index: i};
-     });
-
-     games[roomName] = game;
-     });
-     */
 }
 var GameModel;
 mongoose.connect('mongodb://cloud_course:cloud_course@ds011664.mlab.com:11664/cloud_course', function (error) {
@@ -308,25 +303,6 @@ mongoose.connect('mongodb://cloud_course:cloud_course@ds011664.mlab.com:11664/cl
 
     }
 });
-
-
-/* Note: using staging server url, remove .testing() for production
- Using .testing() will overwrite the debug flag with true */
-var LEX = require('letsencrypt-express').testing();
-
-var lex = LEX.create({
-    configDir: require('os').homedir() + '/letsencrypt/etc'
-    , approveRegistration: function (hostname, cb) { // leave `null` to disable automatic registration
-        // Note: this is the place to check your database to get the user associated with this domain
-        cb(null, {
-            domains: [hostname]
-            , email: 'my@huji.com'
-            , agreeTos: true
-        });
-    }
-});
-
-lex.onRequest = app;
 
 // Routing
 app.use(express.static(__dirname + '/public'));
